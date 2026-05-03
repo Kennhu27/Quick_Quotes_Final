@@ -2,7 +2,10 @@ import express, { Express } from 'express';
 import './config.js'; // do not remove this line
 import { sessionMiddleware } from './sessionConfig.js';
 import { 
-  createQuote, 
+  createQuote,
+  updateQuoteFeet_width,
+  updateQuoteFeet_length,
+  updateQuoteSqr_feet,
   updateQuoteDemolition, 
   updateQuoteGrout, 
   updateQuotePickup, 
@@ -25,6 +28,9 @@ app.use(express.static('public', { extensions: ['html'] }));
 app.use(express.static('frontend/build'));
 
 app.post('/api/quotes', createQuote);
+app.patch('/api/quotes/:quoteId/width', updateQuoteFeet_width);
+app.patch('/api/quotes/:quoteId/length', updateQuoteFeet_length);
+app.patch('/api/quotes/:quoteId/sqfeet', updateQuoteSqr_feet);
 app.patch('/api/quotes/:quoteId/demolition', updateQuoteDemolition);
 app.patch('/api/quotes/:quoteId/grout', updateQuoteGrout);
 app.patch('/api/quotes/:quoteId/pickup', updateQuotePickup);

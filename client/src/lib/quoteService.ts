@@ -22,11 +22,27 @@ export interface QuoteResponse {
   quote_total: number;
 }
 
-export async function createQuote(quoteData: Partial<QuoteData>): Promise<QuoteResponse> {
+type JsonCompatible = Record<string, unknown>;
+
+function toJsonCompatible(data: QuoteData): JsonCompatible {
+  return {
+    feet_width: data.feet_width,
+    feet_length: data.feet_length,
+    sqr_feet: data.sqr_feet,
+    demolition: data.demolition,
+    grout: data.grout,
+    pickup: data.pickup,
+    thin_set: data.thin_set
+  };
+}
+
+export async function createQuote(quoteData: QuoteData): Promise<QuoteResponse> {
   console.log('Creating quote with data:', quoteData);
   
   try {
-    const response = await api.post<QuoteResponse>('/quotes', quoteData);
+    // Convert to JSON-compatible format
+    const jsonData = toJsonCompatible(quoteData);
+    const response = await api.post<QuoteResponse>('/quotes', jsonData);
     console.log('API response:', response);
     
     if (!response.ok) {
@@ -73,7 +89,8 @@ export async function updateThinSet(quoteId: string, thin_set: boolean): Promise
 }
 
 export async function calculateQuoteTotal(quoteId: string, quoteData: QuoteData): Promise<QuoteResponse> {
-  const response = await api.post<QuoteResponse>(`/quotes/${quoteId}/calculate`, quoteData);
+  const jsonData = toJsonCompatible(quoteData);
+  const response = await api.post<QuoteResponse>(`/quotes/${quoteId}/calculate`, jsonData);
   if (!response.ok) {
     throw new Error('Failed to calculate quote total');
   }
