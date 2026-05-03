@@ -22,9 +22,7 @@ export interface QuoteResponse {
   quote_total: number;
 }
 
-type JsonCompatible = Record<string, unknown>;
-
-function toJsonCompatible(data: QuoteData): JsonCompatible {
+function toJsonCompatible(data: QuoteData): Record<string, unknown> {
   return {
     feet_width: data.feet_width,
     feet_length: data.feet_length,
@@ -39,21 +37,14 @@ function toJsonCompatible(data: QuoteData): JsonCompatible {
 export async function createQuote(quoteData: QuoteData): Promise<QuoteResponse> {
   console.log('Creating quote with data:', quoteData);
   
-  try {
-    // Convert to JSON-compatible format
-    const jsonData = toJsonCompatible(quoteData);
-    const response = await api.post<QuoteResponse>('/quotes', jsonData);
-    console.log('API response:', response);
-    
-    if (!response.ok) {
-      console.error('API error details:', response);
-      throw new Error(`Failed to create quote: ${response.status} ${JSON.stringify(response.data)}`);
-    }
-    return response.data;
-  } catch (error) {
-    console.error('Create quote error:', error);
-    throw error;
+  const jsonData = toJsonCompatible(quoteData);
+  const response = await api.post<QuoteResponse>('/quotes', jsonData);
+  
+  if (!response.ok) {
+    console.error('API error details:', response);
+    throw new Error(`Failed to create quote: ${response.status}`);
   }
+  return response.data;
 }
 
 export async function updateDemolition(quoteId: string, demolition: boolean): Promise<QuoteResponse> {

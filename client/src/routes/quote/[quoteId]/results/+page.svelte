@@ -1,29 +1,54 @@
 <script lang="ts">
   import { onMount } from 'svelte';
   import { goto } from '$app/navigation';
+  import { page } from '$app/stores';
   import { toast } from '$lib/toast.svelte';
+  import { 
+    updateDemolition, 
+    updateGrout, 
+    updatePickup, 
+    updateThinSet,
+    calculateQuoteTotal 
+  } from '$lib/quoteService';
   
-  let quoteData: any = null;
-  let area: number = 0;
+  let quoteId: string = '';
+  let quote: any = null;
+  let loading = true;
   
   let demolition = false;
   let grout = false;
   let pickup = false;
   let thin_set = false;
+  let area = 0;
+  let feet_width = 0;
+  let feet_length = 0;
   
-  onMount(() => {
-    const storedData = sessionStorage.getItem('quoteData');
-    if (storedData) {
-      quoteData = JSON.parse(storedData);
-      area = quoteData.area;
-      demolition = quoteData.demolition;
-      grout = quoteData.grout;
-      pickup = quoteData.pickup;
-      thin_set = quoteData.thin_set;
-    } else {
-      toast.error('No quote data found. Please start over.');
+  onMount(async () => {
+    // Get quoteId from URL params
+    quoteId = $page.params.quoteId;
+    
+    if (!quoteId) {
+      toast.error('No quote ID found. Please start over.');
       goto('/quote');
+      return;
     }
+    
+    // Retrieve the stored data from sessionStorage
+    const storedArea = sessionStorage.getItem('quoteArea');
+    const storedUseDimensions = sessionStorage.getItem('useDimensions');
+    const storedWidth = sessionStorage.getItem('feet_width');
+    const storedLength = sessionStorage.getItem('feet_length');
+    
+    if (storedArea) {
+      area = parseFloat(storedArea);
+    }
+    
+    if (storedUseDimensions === 'true') {
+      feet_width = storedWidth ? parseFloat(storedWidth) : 0;
+      feet_length = storedLength ? parseFloat(storedLength) : 0;
+    }
+    
+    loading = false;
   });
   
   function calculateGroutIncrements(squareFeet: number): number {
@@ -71,16 +96,64 @@
     }).format(amount);
   }
   
-  function updateQuote() {
-    quoteData.demolition = demolition;
-    quoteData.grout = grout;
-    quoteData.pickup = pickup;
-    quoteData.thin_set = thin_set;
-    sessionStorage.setItem('quoteData', JSON.stringify(quoteData));
-    toast.success('Quote updated!');
+  async function updateQuoteAndCalculate() {
+    try {
+      // Update each service in the backend
+      await Promise.all([
+        updateDemolition(quoteId, demolition),
+        updateGrout(quoteId, grout),
+        updatePickup(quoteId, pickup),
+        updateThinSet(quoteId, thin_set)
+      ]);
+      
+      // Prepare data for final calculation
+      const quoteData = {
+        feet_width: feet_width,
+        feet_length: feet_length,
+        sqr_feet: area,
+        demolition,
+        grout,
+        pickup,
+        thin_set
+      };
+      
+      // Calculate the total
+      const updatedQuote = await calculateQuoteTotal(quoteId, quoteData);
+      quote = updatedQuote;
+      
+      toast.success('Quote updated!');
+    } catch (error) {
+      console.error('Error updating quote:', error);
+      toast.error('Failed to update quote');
+    }
+  }
+  
+  async function toggleDemolition() {
+    demolition = !demolition;
+    await updateQuoteAndCalculate();
+  }
+  
+  async function toggleGrout() {
+    grout = !grout;
+    await updateQuoteAndCalculate();
+  }
+  
+  async function togglePickup() {
+    pickup = !pickup;
+    await updateQuoteAndCalculate();
+  }
+  
+  async function toggleThinSet() {
+    thin_set = !thin_set;
+    await updateQuoteAndCalculate();
   }
   
   function startNewQuote() {
+    sessionStorage.removeItem('currentQuoteId');
+    sessionStorage.removeItem('quoteArea');
+    sessionStorage.removeItem('useDimensions');
+    sessionStorage.removeItem('feet_width');
+    sessionStorage.removeItem('feet_length');
     goto('/quote');
   }
   
@@ -91,25 +164,23 @@
 
 <div class="container">
   <div class="header">
-    <!-- Changed from on:click to onclick -->
     <button class="home-button" onclick={goHome}>← Back to Home</button>
-    <!-- Changed from on:click to onclick -->
     <button class="new-quote-button" onclick={startNewQuote}>+ New Quote</button>
   </div>
   
   <h1>Your Quote Results</h1>
   
-  {#if quoteData}
+  {#if !loading}
     <div class="summary">
       <h2>Project Details</h2>
       <div class="summary-item">
         <span>Total Area:</span>
         <strong>{area} sq ft</strong>
       </div>
-      {#if quoteData.feet_width > 0 && quoteData.feet_length > 0}
+      {#if feet_width > 0 && feet_length > 0}
         <div class="summary-item">
           <span>Dimensions:</span>
-          <strong>{quoteData.feet_width}' × {quoteData.feet_length}'</strong>
+          <strong>{feet_width}' × {feet_length}'</strong>
         </div>
       {/if}
     </div>
@@ -121,8 +192,8 @@
       <label class="service-option">
         <input 
           type="checkbox" 
-          bind:checked={demolition}
-          onchange={updateQuote}
+          checked={demolition}
+          onchange={toggleDemolition}
         />
         <div class="service-info">
           <strong>Demolition</strong>
@@ -134,8 +205,8 @@
       <label class="service-option">
         <input 
           type="checkbox" 
-          bind:checked={grout}
-          onchange={updateQuote}
+          checked={grout}
+          onchange={toggleGrout}
         />
         <div class="service-info">
           <strong>Grout</strong>
@@ -147,8 +218,8 @@
       <label class="service-option">
         <input 
           type="checkbox" 
-          bind:checked={pickup}
-          onchange={updateQuote}
+          checked={pickup}
+          onchange={togglePickup}
         />
         <div class="service-info">
           <strong>Material Pickup</strong>
@@ -160,8 +231,8 @@
       <label class="service-option">
         <input 
           type="checkbox" 
-          bind:checked={thin_set}
-          onchange={updateQuote}
+          checked={thin_set}
+          onchange={toggleThinSet}
         />
         <div class="service-info">
           <strong>Thin Set</strong>
@@ -171,7 +242,6 @@
       </label>
     </div>
     
-    <!-- TOTAL DISPLAYED AT THE BOTTOM -->
     <div class="quote-result">
       <h2>Price Breakdown</h2>
       
@@ -209,16 +279,14 @@
       {/if}
       
       <div class="breakdown-item total">
-        <span>Total:</span>
-        <span>{formatCurrency(calculateTotal())}</span>
+        <span>Total (from API):</span>
+        <span>{quote ? formatCurrency(quote.quote_total) : formatCurrency(calculateTotal())}</span>
       </div>
       
       <div class="quote-actions">
-        <!-- Changed from on:click to onclick -->
         <button class="print-button" onclick={() => window.print()}>
           🖨️ Print Quote
         </button>
-        <!-- Changed from on:click to onclick -->
         <button class="new-quote-bottom" onclick={startNewQuote}>
           + Create Another Quote
         </button>

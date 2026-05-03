@@ -1,6 +1,7 @@
 <script lang="ts">
   import { toast } from '$lib/toast.svelte';
   import { goto } from '$app/navigation';
+  import { createQuote } from '$lib/quoteService';
   
   let loading = false;
   
@@ -16,7 +17,7 @@
   
   $: calculatedSqrFeet = feet_width * feet_length;
   
-  function handleSubmit() {
+  async function handleSubmit() {
     loading = true;
     
     let area = useDimensions ? calculatedSqrFeet : sqr_feet;
@@ -27,22 +28,40 @@
       return;
     }
     
-
+    // Prepare data for API
     const quoteData = {
-      area,
       feet_width: useDimensions ? feet_width : 0,
       feet_length: useDimensions ? feet_length : 0,
+      sqr_feet: !useDimensions ? sqr_feet : 0,
       demolition,
       grout,
       pickup,
       thin_set
     };
     
-    sessionStorage.setItem('quoteData', JSON.stringify(quoteData));
-    
-    toast.success('Quote prepared!');
-    
-    goto('/quote/results');
+    try {
+      // Create quote in backend
+      const createdQuote = await createQuote(quoteData);
+      
+      // Store only the quoteId in sessionStorage
+      sessionStorage.setItem('currentQuoteId', createdQuote.quoteId);
+      sessionStorage.setItem('quoteArea', area.toString());
+      sessionStorage.setItem('useDimensions', useDimensions.toString());
+      if (useDimensions) {
+        sessionStorage.setItem('feet_width', feet_width.toString());
+        sessionStorage.setItem('feet_length', feet_length.toString());
+      }
+      
+      toast.success('Quote created successfully!');
+      
+      // Navigate to results page with quote ID
+      goto(`/quote/${createdQuote.quoteId}/results`);
+    } catch (error) {
+      console.error('Error creating quote:', error);
+      toast.error('Failed to create quote. Please try again.');
+    } finally {
+      loading = false;
+    }
   }
   
   function goBack() {
@@ -156,7 +175,7 @@
     </fieldset>
     
     <button type="submit" class="submit-button" disabled={loading}>
-      {loading ? 'Processing...' : 'Calculate Quote →'}
+      {loading ? 'Creating Quote...' : 'Calculate Quote →'}
     </button>
   </form>
 </div>
