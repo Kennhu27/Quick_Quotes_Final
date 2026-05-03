@@ -24,7 +24,6 @@
   let feet_length = 0;
   
   onMount(async () => {
-    // Get quoteId from URL params
     quoteId = $page.params.quoteId;
     
     if (!quoteId) {
@@ -33,7 +32,6 @@
       return;
     }
     
-    // Retrieve the stored data from sessionStorage
     const storedArea = sessionStorage.getItem('quoteArea');
     const storedUseDimensions = sessionStorage.getItem('useDimensions');
     const storedWidth = sessionStorage.getItem('feet_width');
@@ -98,7 +96,6 @@
   
   async function updateQuoteAndCalculate() {
     try {
-      // Update each service in the backend
       await Promise.all([
         updateDemolition(quoteId, demolition),
         updateGrout(quoteId, grout),
@@ -106,7 +103,6 @@
         updateThinSet(quoteId, thin_set)
       ]);
       
-      // Prepare data for final calculation
       const quoteData = {
         feet_width: feet_width,
         feet_length: feet_length,
@@ -117,7 +113,6 @@
         thin_set
       };
       
-      // Calculate the total
       const updatedQuote = await calculateQuoteTotal(quoteId, quoteData);
       quote = updatedQuote;
       
@@ -292,6 +287,16 @@
         </button>
       </div>
     </div>
+    
+    <div class="disclaimer">
+      <hr />
+      <p class="estimation-note">
+        ⚠️ <strong>Note:</strong> This is just an estimation. Final pricing may vary based on site inspection and actual conditions.
+      </p>
+      <p class="free-inspection">
+        ✅ <strong>Remember! Free inspections available!</strong>
+      </p>
+    </div>
   {:else}
     <div class="loading">
       <p>Loading quote data...</p>
@@ -300,10 +305,20 @@
 </div>
 
 <style>
+  body {
+    background-color: #2C3E6B;
+    margin: 0;
+    padding: 0;
+  }
+  
   .container {
     max-width: 800px;
+    width: 100%;
     margin: 0 auto;
-    padding: 2rem;
+    padding: 1rem;
+    background-color: #2C3E6B;
+    min-height: 100vh;
+    box-sizing: border-box;
   }
   
   .header {
@@ -311,6 +326,7 @@
     justify-content: space-between;
     margin-bottom: 2rem;
     gap: 1rem;
+    flex-wrap: wrap;
   }
   
   .home-button, .new-quote-button {
@@ -323,38 +339,44 @@
   
   .home-button {
     background: none;
-    color: #007bff;
+    color: #D4DFF5;
   }
   
   .home-button:hover {
+    color: #B3412D;
     text-decoration: underline;
   }
   
   .new-quote-button {
-    background-color: #007bff;
+    background-color: #B3412D;
     color: white;
   }
   
   .new-quote-button:hover {
-    background-color: #0056b3;
+    background-color: #8B2A1A;
   }
   
   h1 {
-    color: #333;
+    color: #FDF8F5;
     margin-bottom: 2rem;
+    text-align: center;
+    font-size: 1.8rem;
   }
   
   h2 {
-    color: #555;
+    color: #B3412D;
     margin-bottom: 1rem;
     font-size: 1.25rem;
   }
   
   .summary {
-    background-color: #f8f9fa;
+    background-color: #FDF8F5;
     padding: 1.5rem;
-    border-radius: 8px;
+    border-radius: 12px;
     margin-bottom: 2rem;
+    border-left: 5px solid #B3412D;
+    box-sizing: border-box;
+    width: 100%;
   }
   
   .summary-item {
@@ -362,6 +384,9 @@
     justify-content: space-between;
     padding: 0.5rem 0;
     border-bottom: 1px solid #e9ecef;
+    color: #1A1A1A;
+    flex-wrap: wrap;
+    gap: 0.5rem;
   }
   
   .summary-item:last-child {
@@ -370,10 +395,11 @@
   
   .services {
     margin-bottom: 2rem;
+    width: 100%;
   }
   
   .subtitle {
-    color: #666;
+    color: #D4DFF5;
     margin-bottom: 1rem;
     font-size: 0.9rem;
   }
@@ -381,21 +407,25 @@
   .service-option {
     display: flex;
     align-items: flex-start;
-    gap: 1rem;
+    gap: 0.8rem;
     padding: 1rem;
     margin: 0.5rem 0;
-    border: 1px solid #e0e0e0;
-    border-radius: 8px;
+    border: 2px solid #B3412D;
+    border-radius: 10px;
     cursor: pointer;
     transition: background-color 0.2s;
+    background-color: #FDF8F5;
+    width: 100%;
+    box-sizing: border-box;
   }
   
   .service-option:hover {
-    background-color: #f8f9fa;
+    background-color: #FFF0E8;
   }
   
   .service-option input {
-    margin-top: 0.25rem;
+    margin-top: 0.2rem;
+    flex-shrink: 0;
   }
   
   .service-info {
@@ -405,22 +435,31 @@
     gap: 0.25rem;
   }
   
+  .service-info strong {
+    font-size: 0.95rem;
+    color: #1A1A1A;
+  }
+  
   .service-info span {
-    color: #007bff;
-    font-weight: 500;
+    color: #B3412D;
+    font-weight: 600;
+    font-size: 0.85rem;
   }
   
   .service-info small {
     color: #666;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
+    line-height: 1.3;
   }
   
   .quote-result {
-    background-color: #f8f9fa;
+    background-color: #FDF8F5;
     padding: 1.5rem;
-    border-radius: 8px;
-    border: 2px solid #28a745;
+    border-radius: 12px;
+    border: 2px solid #B3412D;
     animation: slideUp 0.3s ease-out;
+    width: 100%;
+    box-sizing: border-box;
   }
   
   .breakdown-item {
@@ -428,16 +467,19 @@
     justify-content: space-between;
     padding: 0.75rem 0;
     border-bottom: 1px solid #e9ecef;
+    color: #1A1A1A;
+    flex-wrap: wrap;
+    gap: 0.5rem;
   }
   
   .breakdown-item.total {
-    border-top: 2px solid #dee2e6;
+    border-top: 2px solid #B3412D;
     border-bottom: none;
     margin-top: 0.75rem;
     padding-top: 1rem;
     font-weight: bold;
     font-size: 1.2rem;
-    color: #28a745;
+    color: #B3412D;
   }
   
   .quote-actions {
@@ -445,6 +487,7 @@
     gap: 1rem;
     margin-top: 1.5rem;
     justify-content: center;
+    flex-wrap: wrap;
   }
   
   .print-button, .new-quote-bottom {
@@ -465,18 +508,51 @@
   }
   
   .new-quote-bottom {
-    background-color: #28a745;
+    background-color: #B3412D;
     color: white;
   }
   
   .new-quote-bottom:hover {
-    background-color: #218838;
+    background-color: #8B2A1A;
+  }
+  
+  .disclaimer {
+    margin-top: 2rem;
+    padding: 1rem;
+    background-color: #FDF8F5;
+    border-left: 4px solid #B3412D;
+    border-radius: 8px;
+    width: 100%;
+    box-sizing: border-box;
+  }
+  
+  .disclaimer hr {
+    margin: 0 0 1rem 0;
+    border: none;
+    border-top: 1px solid #B3412D;
+  }
+  
+  .estimation-note {
+    color: #1A1A1A;
+    margin: 0.5rem 0;
+    font-size: 0.9rem;
+    line-height: 1.4;
+  }
+  
+  .free-inspection {
+    color: #1A1A1A;
+    background-color: #FFF0E8;
+    padding: 0.5rem;
+    border-radius: 4px;
+    margin: 0.5rem 0 0 0;
+    font-size: 0.9rem;
+    line-height: 1.4;
   }
   
   .loading {
     text-align: center;
     padding: 3rem;
-    color: #666;
+    color: #D4DFF5;
   }
   
   @keyframes slideUp {
@@ -490,8 +566,69 @@
     }
   }
   
+  @media (min-width: 768px) {
+    .container {
+      padding: 2rem;
+    }
+  }
+  
+  @media (max-width: 480px) {
+    .container {
+      padding: 0.8rem;
+    }
+    
+    h1 {
+      font-size: 1.4rem;
+    }
+    
+    h2 {
+      font-size: 1.1rem;
+    }
+    
+    .summary {
+      padding: 1rem;
+    }
+    
+    .quote-result {
+      padding: 1rem;
+    }
+    
+    .service-option {
+      padding: 0.8rem;
+    }
+    
+    .service-info strong {
+      font-size: 0.85rem;
+    }
+    
+    .service-info span {
+      font-size: 0.8rem;
+    }
+    
+    .service-info small {
+      font-size: 0.75rem;
+    }
+    
+    .breakdown-item {
+      font-size: 0.85rem;
+    }
+    
+    .breakdown-item.total {
+      font-size: 1rem;
+    }
+    
+    .print-button, .new-quote-bottom {
+      padding: 0.6rem 1rem;
+      font-size: 0.8rem;
+    }
+    
+    .estimation-note, .free-inspection {
+      font-size: 0.8rem;
+    }
+  }
+  
   @media print {
-    .header, .quote-actions, .new-quote-button {
+    .header, .quote-actions, .new-quote-button, .disclaimer {
       display: none;
     }
   }
