@@ -10,8 +10,8 @@ for (const varName of requiredEnvVars) {
   if (!process.env[varName]) {
     throw new Error(
       `${varName} is missing. Add it to your .env file.\n` +
-        'Required variables: DB_HOST, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_NAME\n' +
-        'See the Environment_Variables-Setup file on canvas for setup instructions.',
+      'Required variables: DB_HOST, DB_PORT, DB_USERNAME, DB_PASSWORD, DB_NAME\n' +
+      'See the Environment_Variables-Setup file on canvas for setup instructions.',
     );
   }
 }

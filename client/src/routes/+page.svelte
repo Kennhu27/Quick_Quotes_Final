@@ -4,6 +4,20 @@
   import { goto } from '$app/navigation';
 </script>
 
+<!-- Navigation bar with login button at top right -->
+<nav class="navbar">
+  <div class="nav-links-right">
+    {#if auth.isLoggedIn}
+      <span class="user-greeting">Welcome, {auth.user?.displayName}</span>
+      <button class="logout-btn" onclick={() => auth.logout()}>Logout</button>
+    {:else}
+      <button class="login-btn" onclick={() => goto('/admin/login')}>
+        Admin Login
+      </button>
+    {/if}
+  </div>
+</nav>
+
 <div class="hero">
   <div class="logo-container">
     <img src="/logo/logo.jpg" alt="Hernandez Flooring LLC Logo" class="logo" />
@@ -83,15 +97,42 @@
 </div>
 
 <style>
-  body {
-    background-color: #2C3E6B;
+  /* Navbar - Top Right Only */
+  .navbar {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    z-index: 100;
   }
   
-  .container {
-    max-width: 1200px;
-    margin: 0 auto;
-    padding: 2rem;
-    background-color: #2C3E6B;
+  .nav-links-right {
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+  }
+  
+  .user-greeting {
+    color: #FDF8F5;
+    font-size: 0.9rem;
+    background: rgba(0,0,0,0.5);
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+  }
+  
+  .login-btn, .logout-btn {
+    background-color: #B3412D;
+    color: white;
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: all 0.3s ease;
+  }
+  
+  .login-btn:hover, .logout-btn:hover {
+    background-color: #8B2A1A;
+    transform: scale(1.05);
   }
   
   .hero {
@@ -241,17 +282,6 @@
     box-shadow: 0 4px 10px rgba(0,0,0,0.3);
   }
   
-  p {
-    text-align: center;
-    color: #D4DFF5;
-    margin-top: 1rem;
-    font-size: 0.85rem;
-  }
-  
-  small, .small-text {
-    color: #1A1A1A;
-  }
-  
   @media (max-width: 768px) {
     .gallery {
       grid-template-columns: 1fr;
@@ -273,6 +303,21 @@
     
     .estimate-text {
       font-size: 0.95rem;
+    }
+    
+    .navbar {
+      top: 10px;
+      right: 10px;
+    }
+    
+    .user-greeting {
+      font-size: 0.75rem;
+      padding: 0.3rem 0.6rem;
+    }
+    
+    .login-btn, .logout-btn {
+      padding: 0.3rem 0.6rem;
+      font-size: 0.75rem;
     }
   }
 </style>

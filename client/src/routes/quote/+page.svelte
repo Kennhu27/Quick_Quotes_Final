@@ -179,13 +179,7 @@
   </form>
 </div>
 
-<style>
-  body {
-    background-color: #2C3E6B;
-    margin: 0;
-    padding: 0;
-  }
-  
+<style>  
   .container {
     max-width: 800px;
     width: 100%;

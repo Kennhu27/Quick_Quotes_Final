@@ -2,23 +2,26 @@ import { Request, Response } from 'express';
 import { AppDataSource } from '../dataSource.js';
 import { User } from '../entities/User.js';
 import { Admin } from '../entities/Admin.js';
+import { Quote } from '../entities/Quote.js';
 import argon2 from 'argon2';
 import { AdminLoginSchema, CreateAdminSchema } from '../validators/secure.js';
 import { parseDatabaseError } from '../utils/db-utils.js';
 
 const userRepository = AppDataSource.getRepository(User);
 const adminRepository = AppDataSource.getRepository(Admin);
+const quoteRepository = AppDataSource.getRepository(Quote); // Add this line - it was missing!
 
+// ============= USER (Just creates an ID) =============
 export async function createUser(req: Request, res: Response): Promise<void> {
   try {
     const newUser = new User();
     const savedUser = await userRepository.save(newUser);
-
+    
     req.session.currentUserId = savedUser.userId;
-
-    res.status(201).json({
+    
+    res.status(201).json({ 
       userId: savedUser.userId,
-      message: 'User created successfully',
+      message: 'User created successfully'
     });
   } catch (err) {
     console.error(err);
@@ -29,14 +32,14 @@ export async function createUser(req: Request, res: Response): Promise<void> {
 
 export async function getUser(req: Request, res: Response): Promise<void> {
   const userId = req.params.userId as string;
-
+  
   try {
     const user = await userRepository.findOne({ where: { userId } });
     if (!user) {
       res.status(404).json({ error: 'User not found' });
       return;
     }
-
+    
     res.json({ userId: user.userId, createdAt: user.createdAt });
   } catch (err) {
     console.error(err);
@@ -44,6 +47,7 @@ export async function getUser(req: Request, res: Response): Promise<void> {
   }
 }
 
+// ============= ADMIN AUTHENTICATION =============
 export async function adminLogin(req: Request, res: Response): Promise<void> {
   const result = AdminLoginSchema.safeParse(req.body);
   if (!result.success) {
@@ -55,7 +59,7 @@ export async function adminLogin(req: Request, res: Response): Promise<void> {
 
   try {
     const admin = await adminRepository.findOne({ where: { email } });
-
+    
     if (!admin) {
       res.sendStatus(403);
       return;
@@ -74,7 +78,7 @@ export async function adminLogin(req: Request, res: Response): Promise<void> {
       res.sendStatus(500);
       return;
     }
-
+    
     if (!isValidPassword) {
       res.sendStatus(403);
       return;
@@ -84,18 +88,18 @@ export async function adminLogin(req: Request, res: Response): Promise<void> {
     await adminRepository.save(admin);
 
     await req.session.clearSession();
-
+    
     req.session.isAdminLoggedIn = true;
     req.session.authenticatedAdmin = {
       adminId: admin.adminId,
       email: admin.email,
-      fullName: admin.fullName,
+      fullName: admin.fullName
     };
 
     res.json({
       adminId: admin.adminId,
       email: admin.email,
-      fullName: admin.fullName,
+      fullName: admin.fullName
     });
   } catch (err) {
     console.error(err);
@@ -118,6 +122,7 @@ export async function getCurrentAdmin(req: Request, res: Response): Promise<void
   res.json(req.session.authenticatedAdmin);
 }
 
+// ============= ADMIN MANAGEMENT =============
 export async function createFirstAdmin(req: Request, res: Response): Promise<void> {
   const adminCount = await adminRepository.count();
   if (adminCount > 0) {
@@ -135,7 +140,7 @@ export async function createFirstAdmin(req: Request, res: Response): Promise<voi
 
   try {
     const passwordHash = await argon2.hash(password);
-
+    
     const newAdmin = new Admin();
     newAdmin.email = email;
     newAdmin.passwordHash = passwordHash;
@@ -201,7 +206,7 @@ export async function getAllAdmins(req: Request, res: Response): Promise<void> {
 
   try {
     const admins = await adminRepository.find({
-      select: ['adminId', 'email', 'fullName', 'isActive', 'lastLoginAt', 'createdAt'],
+      select: ['adminId', 'email', 'fullName', 'isActive', 'lastLoginAt', 'createdAt']
     });
     res.json(admins);
   } catch (err) {
@@ -236,7 +241,7 @@ export async function updateAdminStatus(req: Request, res: Response): Promise<vo
     res.json({
       adminId: updatedAdmin.adminId,
       email: updatedAdmin.email,
-      isActive: updatedAdmin.isActive,
+      isActive: updatedAdmin.isActive
     });
   } catch (err) {
     console.error(err);
@@ -269,5 +274,23 @@ export async function deleteAdmin(req: Request, res: Response): Promise<void> {
   } catch (err) {
     console.error(err);
     res.status(500).json({ error: 'Failed to delete admin' });
+  }
+}
+
+// ============= QUOTES MANAGEMENT =============
+export async function getAllQuotes(req: Request, res: Response): Promise<void> {
+  if (!req.session.isAdminLoggedIn || !req.session.authenticatedAdmin) {
+    res.status(401).json({ error: 'Authentication required' });
+    return;
+  }
+
+  try {
+    const quotes = await quoteRepository.find({
+      order: { quoteId: 'DESC' }
+    });
+    res.json(quotes);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Failed to get quotes' });
   }
 }

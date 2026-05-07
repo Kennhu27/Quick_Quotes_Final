@@ -25,6 +25,9 @@ import {
   deleteAdmin
 } from './controllers/SecureController.js';
 
+import { getAllQuotes } from './controllers/SecureController.js';
+
+
 const app: Express = express();
 
 app.use(sessionMiddleware); // Setup session management middleware
@@ -63,6 +66,7 @@ app.post('/api/admin/setup', createFirstAdmin);
 app.post('/api/admin/login', adminLogin);
 app.post('/api/admin/logout', adminLogout);
 app.get('/api/admin/me', getCurrentAdmin);
+app.get('/api/admin/quotes', getAllQuotes);
 
 // ==========================================
 // ADMIN MANAGEMENT ROUTES
