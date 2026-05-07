@@ -6,7 +6,7 @@
   
   let quotes: any[] = [];
   let loading = true;
-  let filter = 'all'; // all, with-services, without-services
+  let filter = 'all';
   
   onMount(async () => {
     if (!auth.isLoggedIn) {
@@ -22,6 +22,7 @@
       const res = await fetch('/api/admin/quotes');
       if (res.ok) {
         quotes = await res.json();
+        console.log('Loaded quotes:', quotes);
       } else {
         toast.error('Failed to load quotes');
       }
@@ -47,10 +48,23 @@
   }
   
   function formatCurrency(amount: number) {
+    const numericAmount = Number(amount) || 0;
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD'
-    }).format(amount);
+    }).format(numericAmount);
+  }
+  
+  function calculateTotal(quote: any): number {
+    let area = quote.sqr_feet || (quote.feet_width * quote.feet_length);
+    let total = area * 4;
+    
+    if (quote.demolition) total += 100;
+    if (quote.grout) total += Math.ceil(area / 50) * 4;
+    if (quote.pickup) total += 100;
+    if (quote.thin_set) total += Math.ceil(area / 70) * 25;
+    
+    return total;
   }
   
   function logout() {
@@ -59,7 +73,6 @@
 </script>
 
 <div class="dashboard-container">
-  <!-- Sidebar -->
   <aside class="sidebar">
     <div class="sidebar-header">
       <h2>Admin Panel</h2>
@@ -80,7 +93,6 @@
     </nav>
   </aside>
   
-  <!-- Main Content -->
   <main class="main-content">
     <div class="top-bar">
       <h1>All Quotes</h1>
@@ -131,7 +143,13 @@
                 <td class="service-cell">{quote.grout ? '✓' : '✗'}</td>
                 <td class="service-cell">{quote.pickup ? '✓' : '✗'}</td>
                 <td class="service-cell">{quote.thin_set ? '✓' : '✗'}</td>
-                <td class="total">{formatCurrency(quote.quote_total)}</td>
+                <td class="total">
+                  {#if quote.quote_total && quote.quote_total > 0}
+                    {formatCurrency(quote.quote_total)}
+                  {:else}
+                    {formatCurrency(calculateTotal(quote))}
+                  {/if}
+                </td>
               </tr>
             {:else}
               <tr>
@@ -144,7 +162,12 @@
       
       <div class="stats-footer">
         <p>Total Quotes: <strong>{getFilteredQuotes().length}</strong></p>
-        <p>Total Revenue: <strong>{formatCurrency(getFilteredQuotes().reduce((sum, q) => sum + q.quote_total, 0))}</strong></p>
+        <p>Total Revenue: <strong>
+          {formatCurrency(getFilteredQuotes().reduce((sum, q) => {
+            const total = (q.quote_total && q.quote_total > 0) ? q.quote_total : calculateTotal(q);
+            return sum + total;
+          }, 0))}
+        </strong></p>
       </div>
     {/if}
   </main>

@@ -13,7 +13,6 @@
   let loading = true;
   
   onMount(async () => {
-    // Check if admin is logged in
     if (!auth.isLoggedIn) {
       goto('/admin/login');
       return;
@@ -25,7 +24,6 @@
   async function loadStats() {
     loading = true;
     try {
-      // Fetch all admins
       const adminsRes = await fetch('/api/admin/admins');
       if (adminsRes.ok) {
         const admins = await adminsRes.json();
@@ -33,7 +31,6 @@
         stats.activeAdmins = admins.filter((a: any) => a.isActive).length;
       }
       
-      // Fetch all quotes
       const quotesRes = await fetch('/api/admin/quotes');
       if (quotesRes.ok) {
         const quotes = await quotesRes.json();
@@ -48,13 +45,43 @@
     }
   }
   
+  function formatCurrency(amount: number) {
+    const numericAmount = Number(amount) || 0;
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(numericAmount);
+  }
+  
+  function calculateQuoteTotal(quote: any): number {
+    let area = quote.sqr_feet;
+    if (area === 0 && quote.feet_length > 0 && quote.feet_width > 0) {
+      area = quote.feet_width * quote.feet_length;
+    }
+    
+    let total = area * 4;
+    
+    if (quote.demolition) total += 100;
+    if (quote.grout) total += Math.ceil(area / 50) * 4;
+    if (quote.pickup) total += 100;
+    if (quote.thin_set) total += Math.ceil(area / 70) * 25;
+    
+    return total;
+  }
+  
+  function getDisplayTotal(quote: any): number {
+    if (quote.quote_total && quote.quote_total > 0) {
+      return quote.quote_total;
+    }
+    return calculateQuoteTotal(quote);
+  }
+  
   function logout() {
     auth.logout();
   }
 </script>
 
 <div class="dashboard-container">
-  <!-- Sidebar -->
   <aside class="sidebar">
     <div class="sidebar-header">
       <h2>Admin Panel</h2>
@@ -75,7 +102,6 @@
     </nav>
   </aside>
   
-  <!-- Main Content -->
   <main class="main-content">
     <div class="top-bar">
       <h1>Dashboard</h1>
@@ -87,7 +113,6 @@
     {#if loading}
       <div class="loading">Loading dashboard...</div>
     {:else}
-      <!-- Stats Cards -->
       <div class="stats-grid">
         <div class="stat-card">
           <div class="stat-icon">👥</div>
@@ -108,7 +133,6 @@
         </div>
       </div>
       
-      <!-- Recent Quotes -->
       <div class="recent-quotes">
         <h2>Recent Quotes</h2>
         {#if recentQuotes.length > 0}
@@ -118,24 +142,14 @@
                 <th>Quote ID</th>
                 <th>Area (sq ft)</th>
                 <th>Total Cost</th>
-                <th>Services</th>
               </tr>
             </thead>
             <tbody>
               {#each recentQuotes as quote}
                 <tr>
-                  <td class="quote-id">{quote.quoteId.slice(0, 8)}...</td>
-                  <td>{quote.sqr_feet || (quote.feet_width * quote.feet_length)}</td>
-                  <td>${quote.quote_total}</td>
-                  <td class="services-cell">
-                    {#if quote.demolition}🔨 {/if}
-                    {#if quote.grout}🪣 {/if}
-                    {#if quote.pickup}🚚 {/if}
-                    {#if quote.thin_set}🧱 {/if}
-                    {#if !quote.demolition && !quote.grout && !quote.pickup && !quote.thin_set}
-                      <span class="no-services">None</span>
-                    {/if}
-                  </td>
+                  <td class="quote-id">{quote.quoteId.slice(0, 8)}...}?</td>
+                  <td class="area">{quote.sqr_feet || (quote.feet_width * quote.feet_length)}</td>
+                  <td class="total">{formatCurrency(getDisplayTotal(quote))}</td>
                 </tr>
               {/each}
             </tbody>
@@ -313,13 +327,13 @@
     color: #555;
   }
   
-  .services-cell {
+  .area {
     color: #555;
   }
   
-  .no-services {
-    color: #999;
-    font-style: italic;
+  .total {
+    font-weight: bold;
+    color: #B3412D;
   }
   
   .loading {

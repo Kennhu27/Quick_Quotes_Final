@@ -51,7 +51,20 @@ async function createQuote(req: Request, res: Response): Promise<void> {
     newQuote.quote_total = 0;
 
     const savedQuote = await quoteRepository.save(newQuote);
-    res.status(201).json(savedQuote);
+
+    // Calculate the total immediately after saving
+    const updatedQuote = await getquote_total(
+      savedQuote.quoteId,
+      feet_length,
+      feet_width,
+      sqr_feet,
+      demolition,
+      grout,
+      pickup,
+      thin_set,
+    );
+
+    res.status(201).json(updatedQuote);
   } catch (err) {
     console.error(err);
     const databaseErrorMessage = parseDatabaseError(err);

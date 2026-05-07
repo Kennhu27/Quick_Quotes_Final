@@ -4,7 +4,6 @@
   import { goto } from '$app/navigation';
 </script>
 
-<!-- Navigation bar with login button at top right -->
 <nav class="navbar">
   <div class="nav-links-right">
     {#if auth.isLoggedIn}

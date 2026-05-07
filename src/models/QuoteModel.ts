@@ -17,6 +17,7 @@ function calculateThinSetIncrements(squareFeet: number): number {
 function calculateSquareFeet(W: number, L: number): number {
   return W * L;
 }
+
 // update functions
 async function updatedemolition(quoteId: string, newdemolition: boolean): Promise<Quote | null> {
   const quote = await quoteRepository.findOne({ where: { quoteId } });
@@ -83,6 +84,7 @@ async function updatefeet_length(quoteId: string, newLength: number): Promise<Qu
   quote.feet_length = newLength;
   return quoteRepository.save(quote);
 }
+
 async function updatesqr_feet(quoteId: string, newArea: number): Promise<Quote | null> {
   const quote = await quoteRepository.findOne({ where: { quoteId } });
 
@@ -110,43 +112,43 @@ async function getquote_total(
     return null;
   }
 
-  let sum: number;
-  sum = 0;
-  if (sqr_feet > 0) {
-    sum += sqr_feet * 4;
+  let sum = 0;
+
+  // Calculate area
+  let area = sqr_feet;
+  if (area === 0 && feet_length > 0 && feet_width > 0) {
+    area = calculateSquareFeet(feet_width, feet_length);
+  }
+
+  if (area > 0) {
+    // Base cost: $4 per square foot
+    sum += area * 4;
+
+    // Demolition fee: $100 flat
     if (demolition) {
       sum += 100;
     }
+
+    // Grout: $4 per 50 sq ft increment
     if (grout) {
-      sum += calculateGroutIncrements(sqr_feet) * 4;
+      sum += calculateGroutIncrements(area) * 4;
     }
+
+    // Pickup: $100 flat
     if (pickup) {
       sum += 100;
     }
+
+    // Thin set: $25 per 70 sq ft increment
     if (thin_set) {
-      sum += calculateThinSetIncrements(sqr_feet) * 25;
+      sum += calculateThinSetIncrements(area) * 25;
     }
+
     quote.quote_total = sum;
-  } else {
-    if (feet_length > 0 && feet_width > 0) {
-      sum += calculateSquareFeet(feet_width, feet_length) * 4;
-      if (demolition) {
-        sum += 100;
-      }
-      if (grout) {
-        sum += calculateGroutIncrements(calculateSquareFeet(feet_width, feet_length)) * 4;
-      }
-      if (pickup) {
-        sum += 100;
-      }
-      if (thin_set) {
-        sum += calculateThinSetIncrements(calculateSquareFeet(feet_width, feet_length)) * 25;
-      }
-      quote.quote_total = sum;
-    }
+    await quoteRepository.save(quote);
   }
 
-  return quoteRepository.save(quote);
+  return quote;
 }
 
 export {

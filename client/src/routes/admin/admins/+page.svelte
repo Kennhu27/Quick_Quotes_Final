@@ -8,7 +8,6 @@
   let loading = true;
   let showCreateModal = false;
   
-  // New admin form
   let newAdmin = {
     email: '',
     password: '',
@@ -124,7 +123,6 @@
 </script>
 
 <div class="dashboard-container">
-  <!-- Sidebar -->
   <aside class="sidebar">
     <div class="sidebar-header">
       <h2>Admin Panel</h2>
@@ -145,7 +143,6 @@
     </nav>
   </aside>
   
-  <!-- Main Content -->
   <main class="main-content">
     <div class="top-bar">
       <h1>Manage Admins</h1>
@@ -206,7 +203,6 @@
   </main>
 </div>
 
-<!-- Create Admin Modal -->
 {#if showCreateModal}
   <div class="modal-overlay" on:click={() => showCreateModal = false}>
     <div class="modal" on:click={(e) => e.stopPropagation()}>
