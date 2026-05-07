@@ -1,13 +1,13 @@
 import { Entity, PrimaryColumn, BeforeInsert } from 'typeorm';
 import { v7 as uuidv7 } from 'uuid';
 
-@Entity()
-export class Quote {
+@Entity('users')
+export class User {
   @PrimaryColumn()
-  quoteId: string;
+  userId: string;
 
   @BeforeInsert()
   generateId(): void {
-    this.quoteId = uuidv7();
+    this.userId = uuidv7();
   }
 }
