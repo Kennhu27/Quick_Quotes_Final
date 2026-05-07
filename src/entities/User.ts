@@ -1,4 +1,4 @@
-import { Entity, PrimaryColumn, BeforeInsert } from 'typeorm';
+import { Entity, PrimaryColumn, BeforeInsert, CreateDateColumn } from 'typeorm';
 import { v7 as uuidv7 } from 'uuid';
 
 @Entity('users')
@@ -10,4 +10,7 @@ export class User {
   generateId(): void {
     this.userId = uuidv7();
   }
+
+  @CreateDateColumn()
+  createdAt: Date;
 }

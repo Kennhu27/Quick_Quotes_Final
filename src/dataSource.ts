@@ -1,5 +1,8 @@
 import 'reflect-metadata';
 import { DataSource } from 'typeorm';
+import { Quote } from './entities/Quote.js';
+import { User } from './entities/User.js';
+import { Admin } from './entities/Admin.js';
 
 const requiredEnvVars = ['DB_HOST', 'DB_PORT', 'DB_USERNAME', 'DB_NAME'] as const;
 
@@ -18,7 +21,7 @@ const useSSL = process.env.DB_SSL_MODE === 'require';
 export const AppDataSource = new DataSource({
   synchronize: true,
   logging: false,
-  entities: ['dist/entities/*.js'],
+  entities: [Quote, User, Admin],
   type: 'postgres',
   host: process.env.DB_HOST,
   port: Number(process.env.DB_PORT),
